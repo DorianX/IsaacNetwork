@@ -1,0 +1,2 @@
+python IsaacServer.py
+pause
