@@ -80,7 +80,7 @@ function ClientThread()
         local roomindex = Game():GetLevel():GetCurrentRoomIndex()
         local JSONString = json.encode(BuildPluginDataTable())
         Isaac.DebugString("Sending string")
-        Network.SendData("[ID]"..ClientID.."[POS]"..player.Position.X..";"..player.Position.Y.."[FLOOR]"..Game():GetLevel():GetStage().."[ROOM]"..roomindex.."[CHAR]"..player:GetName().."[REDM]"..player:GetMaxHearts().."[RED]"..player:GetHearts().."[SOUL]"..player:GetSoulHearts().."[PLUGINDATA]"..JSONString) -- Transmit all interesting information to the server
+        Network.SendData("[ID]"..ClientID.."[PLUGINDATA]"..JSONString) -- Transmit all interesting information to the server
         Isaac.DebugString("Start reading")
         client:settimeout(0)
         local playertable = Network.Read(client)
@@ -97,16 +97,22 @@ end
 
 local rBuf = ""
 function Network.Read(socket)
-    local l, err, rBuf = socket:receive("*l", rBuf)
-    if not l then
-        if err ~= "timeout" then
-          Network.CloseConnection()
-          Isaac.DebugString("Read error:"..err)
-        end
-    else
-        rBuf = ""
+    local l, err
+    local lastLine
+    l = ""
+    while l ~= nil do
+      l, err, rBuf = socket:receive("*l", rBuf)
+      if not l then
+          if err ~= "timeout" then
+            Network.CloseConnection()
+            Isaac.DebugString("Read error:"..err)
+          end
+        else
+          Isaac.DebugString(l)
+          lastLine = l
+      end
     end
-    return l
+    return lastLine
 end
 
 function Network.SendData(data)

@@ -6,12 +6,15 @@ from parse import *
 
 IsaacClients = {}
 ClientState= {}
+IP_to_CID = {}
 
 file = open("config.json", "r")
 file = file.read()
 config = json.loads(file)
 
 seed = config['seed']
+
+connected_clients = []
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
@@ -20,18 +23,8 @@ server.listen(config['maxClient'])
 
 num_clients = 0
 
-def recvall(c, n):
-    data = []
-    while n > 0:
-        s = c.recv(n)
-        if not s: raise EOFError
-        data.append(s)
-        n -= len(s)
-    return b''.join(data)
-
-IP_to_CID = {}
 server_launched = True
-connected_clients = []
+
 
 while server_launched:
 
@@ -81,8 +74,7 @@ while server_launched:
 
                 for line in msg_recved:
                     data = parse(
-                        "[ID]{ID}[POS]{x};{y}[FLOOR]{FloorIndex}[ROOM]{RoomIndex}[CHAR]{CharacterName}"
-                        + "[REDM]{MaxHeart}[RED]{Hearts}[SOUL]{SoulHearts}[PLUGINDATA]{PluginData}",
+                        "[ID]{ID}[PLUGINDATA]{PluginData}",
                         line)
                     if data is not None:
                         IsaacClients[data['ID']] = data
@@ -97,15 +89,6 @@ while server_launched:
             luaTable = luaTable \
                        + "[" + player['ID'] \
                        + "]={ID=" + player['ID'] \
-                       + ",STATE=" + ClientState[int(player['ID'])] \
-                       + ",POS={x=" + player['x'] \
-                       + ",y=" + player['y'] \
-                       + "},FLOOR=" + player['FloorIndex'] \
-                       + ",ROOM=" + player['RoomIndex'] \
-                       + ",CHAR='" + player['CharacterName'] \
-                       + "',REDM=" + player['MaxHeart'] \
-                       + ",RED=" + player['Hearts'] \
-                       + ",SOUL=" + player['SoulHearts'] \
                        + ",PLUGINDATA=[===[" + player['PluginData'] + "]===]" \
                        + "},"
         luaTable = luaTable[:len(luaTable) - 1] + "}\n"
@@ -118,7 +101,7 @@ while server_launched:
                     rtrn = client_to_send.sendall(luaTable.encode())
                 except socket.error:
                     connected_clients.remove(client_to_send)
-                    ClientState[IP_to_CID[client_to_send.getpeername()]] = "'Disconnected'"
+                    ClientStat[IP_to_CID[client_to_send.getpeername()]] = "'Disconnected'"
                     client_to_send.close()
                     pass
                 else:
