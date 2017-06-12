@@ -4,7 +4,7 @@ json = require('json')
 
 IsaacNetwork = {}
 
-local Mod = RegisterMod("API-Test", 1)
+local Mod = RegisterMod("IsaacNetwork", 1)
 local client
 local remote --remote client
 local server
@@ -220,17 +220,24 @@ end
 Mod:AddCallback(ModCallbacks.MC_POST_RENDER, Mod.RenderLoop)
 Mod:AddCallback(ModCallbacks.MC_EXECUTE_CMD, Mod.Command)
 
-function PluginTableBuilder()
+function PositionSyncBuilder()
+  local player = Isaac.GetPlayer(0);
   local table = {}
-  table.Thing = "COOL"
+  table.PositionX = player.Position.X;
+  table.PositionY = player.Position.Y;
+  table.Name = player:GetName();
   return table
 end
 
-function PluginTableProcessor(table)
-  Isaac.DebugString("called")
+function PositionSyncProcessor(table)
   for ID,Data in pairs(table) do
-    Isaac.DebugString(ID.." said "..Data['Thing'])
+    --if ID ~= clientID then
+      local worldPos = Vector(Data['PositionX'], Data['PositionY'])
+      local screenPos = Game():GetRoom():WorldToScreenPosition(worldPos)
+      Isaac.RenderText(ID..": "..Data['Name'], screenPos.X, screenPos.Y, 1, 1, 1, 1)
+    --end
   end
 end
 
-IsaacNetwork.RegisterNetworkPlugin("plugin", PluginTableBuilder, PluginTableProcessor)
+
+IsaacNetwork.RegisterNetworkPlugin("PositionSync", PositionSyncBuilder, PositionSyncProcessor)

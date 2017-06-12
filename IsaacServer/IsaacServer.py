@@ -20,6 +20,16 @@ server.listen(config['maxClient'])
 
 num_clients = 0
 
+def recvall(c, n):
+    data = []
+    while n > 0:
+        s = c.recv(n)
+        if not s: raise EOFError
+        data.append(s)
+        n -= len(s)
+    return b''.join(data)
+
+IP_to_CID = {}
 server_launched = True
 connected_clients = []
 
@@ -30,13 +40,15 @@ while server_launched:
 
     for connection in connections_asked:  # connect the clients
         connection_client, info_client = connection.accept()
-        print(info_client)
+        print()
 
         connected_clients.append(connection_client)
         print("Sending Seed")
         num_clients += 1
         check = ""
         connection_client.sendall((seed + str(num_clients) + "\n").encode())  # sends the string plus the client ID
+        IP_to_CID[info_client] = num_clients
+        print(connection_client.getpeername())
 
     clients_to_read = []
     try:
@@ -50,6 +62,7 @@ while server_launched:
                 msg_recved = client.recv(1024)  # let's receive
             except socket.error:
                 connected_clients.remove(client)
+                ClientState[IP_to_CID[client.getpeername()]] = "'Disconnected'"
                 client.close()
                 pass
             else:
@@ -105,6 +118,7 @@ while server_launched:
                     rtrn = client_to_send.sendall(luaTable.encode())
                 except socket.error:
                     connected_clients.remove(client_to_send)
+                    ClientState[IP_to_CID[client_to_send.getpeername()]] = "'Disconnected'"
                     client_to_send.close()
                     pass
                 else:
