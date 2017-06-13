@@ -1,5 +1,6 @@
 {
   "seed":"DDV0 ZC1A",
   "port":21666,
-  "maxClient":10
+  "maxClient":10,
+  "bufferMax": 32768
 }

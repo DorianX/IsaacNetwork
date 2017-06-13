@@ -1,2 +1,2 @@
-python IsaacServer2.py
+python IsaacServer.py
 pause
